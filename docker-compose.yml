@@ -196,6 +196,10 @@ services:
       - "/dev/kfd"
       - "/dev/dri"
 
+  ollama-windows:
+    profiles: ["windows"]
+    <<: *service-ollama
+
   ollama-pull-llama-cpu:
     profiles: ["cpu"]
     <<: *init-ollama

@@ -162,6 +162,23 @@ Additionally, after you see "Editor is now accessible via: http://localhost:5678
 2. Click on "Local Ollama service"
 3. Change the base URL to "http://host.docker.internal:11434/"
 
+### For Windows 11 users with NVIDIA RTX 3070
+
+If you're using Windows 11 with an NVIDIA RTX 3070 GPU, you can set up Ollama to utilize your GPU for faster inference. Follow these steps:
+
+1. Ensure you have the latest NVIDIA drivers installed.
+2. Install Docker Desktop and enable WSL 2 backend.
+3. Run the starter kit with the `windows` profile:
+   ```bash
+   python start_services.py --profile windows
+   ```
+
+4. After you see "Editor is now accessible via: http://localhost:5678/":
+
+   1. Head to http://localhost:5678/home/credentials
+   2. Click on "Local Ollama service"
+   3. Change the base URL to "http://host.docker.internal:11434/"
+
 ### For everyone else
 
 ```bash
