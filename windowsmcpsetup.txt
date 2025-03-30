@@ -1,0 +1,146 @@
+I copied the definitions for Windows from claude_desktop_config.json which I got working by following the instructions in this issue.
+
+Filesystem access and Brave search work in the Claude desktop app and the following makes them work for me in cline.
+
+where node outputs C:\Program Files\nodejs\node.exe on my machine
+npm root -g outputs C:\Users\<my user>\AppData\Roaming\npm\node_modules
+
+I then specified these paths with double backslashes (\\) in the cline MCP settings
+
+  "mcpServers": {
+    "filesystem": {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\Users\\<my user>\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-filesystem\\dist\\index.js",
+        "C:\\Users\\<my user>\\Projects"
+      ]
+    },
+    "brave-search": {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\Users\\<my user>\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-brave-search\\dist\\index.js"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "<my API key>"
+      }
+    }
+  }
+}
+
+Do remember that you need to manually update servers that you address this way by simply running this again:
+
+npm install -g @modelcontextprotocol/server-filesystem
+npm install -g @modelcontextprotocol/server-brave-search
+npm install -g @modelcontextprotocol/server-<any other nodejs server>
+
+I assume that once the npx command is working it will pull the necessary server updates itself.
+
+
+
+it works for me by first install uvx then choose a config mcp with uvx as args like that :
+
+Install uvx through : powershell -c "irm https://astral.sh/uv/install.ps1 | iex
+
+then add your mcp config in cline (check support uvx) 👍 
+{
+  "mcpServers": { 
+    "mcp-pandoc": {
+      "command": "uvx",
+      "args": ["mcp-pandoc"]
+    }
+  }
+}
+
+
+To get github to work on Windows 11:
+
+{
+    "mcpServers": {
+        "github": {
+	    "command": "C:\\Program Files\\nodejs\\node.exe",
+	    "args": ["C:\\Users\\scott\\AppData\\Roaming\\npm\\node_modules\\@modelcontextprotocol\\server-github\\dist\\index.js"],
+	    "env": {
+        	"GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_HG...deleted...wx"
+	    }
+	}
+    }
+}
+
+Seems likely the issue is that npx is a script, not a binary. The fact that calls like node and uvx work fine (when configured correctly on the PATH) supports this suspicion.
+
+The easy solution would be to call npx.cmd on Windows instead, but this option is complicated by nodejs/node@69ffc6d. As expected, trying this changes the error from ENOENT to EINVAL.
+
+A relevant excerpt from that commit:
+
+// Node.js on Windows should not be able to spawn batch files directly,
+// only when the 'shell' option is set. An undocumented feature of the
+// Win32 CreateProcess API allows spawning .bat and .cmd files directly
+// but it does not sanitize arguments. We cannot do that automatically
+// because it's sometimes impossible to escape arguments unambiguously.
+//
+// Expectation: spawn() and spawnSync() raise EINVAL if and only if:
+//
+// 1. 'shell' option is unset
+// 2. Platform is Windows
+// 3. Filename ends in .bat or .cmd, case-insensitive
+//
+// exec() and execSync() are unchanged.
+
+npx also includes a Powershell script, npx.ps1. This option, too, is complicated by the fact that node will be denied PS1 script execution by default.
+
+In the meantime, here's my update-friendly version of the workaround which doesn't involve fishing around to locate each package's entrypoint:
+
+    "<MCP SERVER NAME>": {
+      "command": "node",
+      "args": [
+        "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+        "-y",
+        "<NPX PACKAGE ID>"
+      ]
+    },
+
+    Or like this.
+
+{
+  "mcpServers": {
+    "github.com/modelcontextprotocol/servers/tree/main/src/sequentialthinking": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+}
+
+
+The solution was far simpler for me.
+
+Followed the documented instructions.
+Then npm install -g <package-name-here>
+Then it worked.
+
+You can find the package name in the config from documented instructions.
+
+So, for example, for server-filesystem, this is the config from documented instructions:
+
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/username/Desktop",
+        "/Users/username/Downloads"
+      ]
+    }
+  }
+}
+
+So the command is:
+
+npm install -g @modelcontextprotocol/server-filesystem
